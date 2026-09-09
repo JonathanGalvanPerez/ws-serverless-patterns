@@ -34,6 +34,11 @@ aws cloudformation describe-stack-resources \
 
 ## Lambda
 
+### Generate a sample event for API Gateway
+```bash
+  sam local generate-event apigateway aws-proxy
+```
+
 ### Invoke a Lambda function locally using Docker
 
 ```bash
