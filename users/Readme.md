@@ -62,65 +62,27 @@ To deploy and interact with this project, you will need:
    *   `UserPoolClient`
    *   `CognitoAuthCommand`
 
-## Testing the API
+## Testing
 
-### 1. Create a User in Cognito
-You can use the AWS CLI or the Cognito AWS Console to create a user. To do it via CLI:
+### 1. Install dependencies
 ```bash
-aws cognito-idp sign-up \
-  --client-id <Your-UserPoolClient-Id> \
-  --username testuser@example.com \
-  --password "MyStrongPassword123!"
+cd ~/ws-serverless-patterns/users
+pip install -r requirements.txt
+pip install -r ./tests/requirements.txt
 ```
 
-Confirm the user:
+### 2. Run unit tests
 ```bash
-aws cognito-idp admin-confirm-sign-up \
-  --user-pool-id <Your-UserPoolId> \
-  --username testuser@example.com
+cd ~/workshop/ws-serverless-patterns/users
+python -m pytest tests/unit -v
 ```
 
-### 2. Get a JWT Token
-Use the `CognitoAuthCommand` provided in your SAM deployment outputs to retrieve an ID Token. Alternatively, use this command:
+### 3. Run integration tests
 ```bash
-aws cognito-idp initiate-auth \
-  --auth-flow USER_PASSWORD_AUTH \
-  --client-id <Your-UserPoolClient-Id> \
-  --auth-parameters USERNAME=testuser@example.com,PASSWORD="MyStrongPassword123!" \
-  --query 'AuthenticationResult.IdToken' \
-  --output text
+cd ~/ws-serverless-patterns/users
+export ENV_STACK_NAME=ws-serverless-patterns-users
+python -m pytest tests/integration -v
 ```
-*Copy the resulting JWT token string.*
-
-### 3. Make API Requests
-Use a tool like `curl` or Postman to interact with your API. You must pass the JWT token in the `Authorization` header.
-
-**Create a user record (POST):**
-*(Note: Because of RBAC, a standard user might only be able to interact with endpoints containing their Cognito `sub` as the `{userid}`, unless they are added to the admin group).*
-```bash
-curl -X POST <Your-APIEndpoint>/users \
-  -H "Authorization: <Your-JWT-Token>" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "John Doe", "email": "johndoe@example.com"}'
-```
-
-**Get all users (GET - Requires Admin Privileges):**
-```bash
-curl -X GET <Your-APIEndpoint>/users \
-  -H "Authorization: <Your-JWT-Token>"
-```
-*If your user is not in the `apiAdmins` Cognito group, this request will return a `403 Forbidden`.*
-
-### 4. Granting Admin Access
-To test the administrator routing rules in the authorizer, add your test user to the `apiAdmins` group:
-
-```bash
-aws cognito-idp admin-add-user-to-group \
-  --user-pool-id <Your-UserPoolId> \
-  --username testuser@example.com \
-  --group-name apiAdmins
-```
-*Note: You will need to re-authenticate (Step 2) to get a new JWT token that includes the updated group claims before making admin API requests.*
 
 ## Cleanup
 
